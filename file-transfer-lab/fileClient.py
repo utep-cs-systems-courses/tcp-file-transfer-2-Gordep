@@ -7,11 +7,10 @@ import socket, sys, re, os
 #Code snippet from framedClient 
 sys.path.append("../lib")
 import params
-################################################ CHANGE THIS
+
 # For proxy
-sys.path.append("../framed-echo")
 from framedSock import framedSend, framedReceive
-###############################################
+
 
 switchesVarDefaults = (
     (('-s', '--server'), 'server', "127.0.0.1:50001"),
