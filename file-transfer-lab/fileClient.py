@@ -30,8 +30,8 @@ if usage:
 # Client connection to server
 # Split server into local host and port
 try:
-   host, serverPort = re.split(":", server)
-   port = int(serverPort)
+   serverHost, serverPort = re.split(":", server)
+   serverPort = int(serverPort)
 except:
    print("Can't parse server:port from  '%s'" % server)
    sys.exit(1)
@@ -39,4 +39,39 @@ except:
 
 #end of code snippet
 ############################################ 
+# Code snippet from framedClient
+
+addrFamily = socket.AF_INET
+socktype = socket.SOCK_STREAM
+addrPort = (serverHost, serverPort)
+
+s = socket.socket(addrFamily, socktype)
+
+if s is None:
+    print('could not open socket')
+    sys.exit(1)
+
+s.connect(addrPort)
+
+while True:
+    
+    try:
+        fileName = input("Enter file name to transfer: ")
+        file = open(fileName,"rb") ### use RB?
+
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+
+    #File to transfer
+    fileContent = file.read()#(1024)
+
+    #s.sendall()
+
+    #framedSend(s, b"hello world", debug)
+
+    framedSend(s,str(fileContent).encode(), debug)
+
+
+
 
