@@ -27,20 +27,43 @@ lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # listener socket
 bindAddr = ("127.0.0.1", listenPort)
 lsock.bind(bindAddr)
 lsock.listen(5)
-
-
-#####################################
-
-from threading import Thread;
-
-
 print("listening on:", bindAddr)
 
+#####################################
+#Code snippet from frameThreadServer
+from threading import Thread, Lock;
 
+lock = Lock()
+class Server(Thread):
+    def __init__(self, sockAddr):
+        Thread.__init__(self)
+        self.sock, self.addr = sockAddr
+        #self.fsock = EncapFramedSock(sockAddr)
+    def run(self):
+        print("new thread handling connection from", self.addr)
+        payload = framedReceive(self.sock, debug)
+        while True:
+            #payload = self.fsock.receive(debug)
+            if debug:
+                print("rec'd: ", payload)
+            if not payload:
+                if debug: print(f"thread connected to {addr} done")
+                self.fsock.close()
+                return          # exit
 
+            lock.acquire()
 
+##################################################
 
+            payload = payload.decode()
 
+            fileContents = payload.encode()
+            #payload += b"!"
+
+            outputFile = open("fileTest.txt",'wb+')
+            outputFile.write(fileContents)
+            outputFile.close()
+            print("fileTest outputted")
 
 
 
@@ -48,28 +71,14 @@ print("listening on:", bindAddr)
 
 
 ################
+
+
+
+
+###################
+#code snippet from frameThreadServer 
 while True:
-	sock, addr = lsock.accept()
-
-	if not os.fork():
-
-		print("connection from -",addr)
-		payload = framedReceive(sock,debug)
-
-		if not payload:
-			print("no paylaod")
-			sys.exit(0)
-
-		if debug:
-			print("rec'd: ", payload)
-
-		payload = payload.decode()
-		fileContents = payload.encode()
-		#payload += b"!"
-
-		outputFile = open("fileTest.txt",'wb+')
-		outputFile.write(fileContents)
-		outputFile.close()
-		print("fileTest outputted")
-
-
+    sockAddr = lsock.accept()
+    server = Server(sockAddr)
+    server.start()
+###################
