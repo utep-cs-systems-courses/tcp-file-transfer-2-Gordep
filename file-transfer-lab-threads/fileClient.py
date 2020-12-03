@@ -9,9 +9,19 @@ sys.path.append("../lib")
 import params
 
 # For proxy
-from framedSock import framedSend, framedReceive
+#from framedSock import framedSend, framedReceive
+
+from EncapFramedSock import EncapFramedSock
 
 
+####NEW ############
+port = input("Would you like to use the stammer proxy? (y/n)\n")
+if 'y' in port:
+    port = "50000"
+else:
+    port = "50001"
+
+####NEW ############
 switchesVarDefaults = (
     (('-s', '--server'), 'server', "127.0.0.1:50001"),
     (('-d', '--debug'), "debug", False), # boolean (set if present)
@@ -36,42 +46,55 @@ except:
    print("Can't parse server:port from  '%s'" % server)
    sys.exit(1)
 
-
-#end of code snippet
-############################################ 
-# Code snippet from framedClient
-
-addrFamily = socket.AF_INET
-socktype = socket.SOCK_STREAM
-addrPort = (serverHost, serverPort)
-
-s = socket.socket(addrFamily, socktype)
+s = None
+sa = None
+fsock = None
+for res in socket.getaddrinfo(serverHost, serverPort, socket.AF_UNSPEC, socket.SOCK_STREAM):
+    af, socketType, proto, cannonname, sa = res
+    try:
+        print("Creating Socket: af=%d, type=%d, proto=%d" % (af, socketType, proto))
+        s = socket.socket(af, socketType, proto)
+    except socket.error as msg:
+        print(" error: %s" % msg)
+        s = None
+        continue
+    try:
+        print("Attempting to connect to %s" % repr(sa))
+        s.connect(sa)
+        fsock = EncapFramedSock((s, sa))
+    except socket.error as msg:
+        print("Error: %s" % msg)
+        s.close()
+        s = None
+        continue
+    break
 
 if s is None:
-    print('could not open socket')
+    print("Could not open socket")
     sys.exit(1)
 
-s.connect(addrPort)
+files = os.listdir(os.curdir)
+print(files)
+try:
+    fileName = input("Enter file name to transfer: ")
+    file = open(fileName,"rb") ### use RB?
 
-while True:
-    
-    try:
-        fileName = input("Enter file name to transfer: ")
-        file = open(fileName,"rb") ### use RB?
+except Exception as e:
+    print(e)
+    sys.exit(1)
 
-    except Exception as e:
-        print(e)
-        sys.exit(1)
+#File to transfer
+fileContent = file.read()#(1024)
 
-    #File to transfer
-    fileContent = file.read()#(1024)
+try:
+    #sends file info to server
+    fsock.send(str(fileContent).encode())
+except BrokenPipeError:
+    print("Disconnected from server")
+    sys.exit(0)
 
-    #s.sendall()
+fsock.send(str(fileContent).encode(),debug)
 
-    #framedSend(s, b"hello world", debug)
-
-    framedSend(s,str(fileContent).encode(), debug)
-
-
+sys.exit(0)
 
 

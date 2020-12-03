@@ -3,11 +3,16 @@
 
 ###################################
 #Code snippet from frameForkServer.py
-
-import sys
+import re, socket, os, threading, sys
 sys.path.append("../lib")       # for params
-import re, socket, params, os
-from framedSock import framedSend, framedReceive
+import params
+######NEW#########
+from threading import Thread, Lock
+#############
+#from framedSock import framedSend, framedReceive
+
+from EncapFramedSock import EncapFramedSock
+
 
 switchesVarDefaults = (
     (('-l', '--listenPort') ,'listenPort', 50001),
@@ -28,33 +33,25 @@ bindAddr = ("127.0.0.1", listenPort)
 lsock.bind(bindAddr)
 lsock.listen(5)
 print("listening on:", bindAddr)
+#####NEW ############
+lock = threading.Lock()
+##################
 
-#####################################
+
 #Code snippet from frameThreadServer
 from threading import Thread, Lock;
 
-lock = Lock()
 class Server(Thread):
     def __init__(self, sockAddr):
         Thread.__init__(self)
         self.sock, self.addr = sockAddr
-        #self.fsock = EncapFramedSock(sockAddr)
+        self.fsock = EncapFramedSock(sockAddr)
     def run(self):
         print("new thread handling connection from", self.addr)
-        payload = framedReceive(self.sock, debug)
+        #payload = framedReceive(self.sock, debug)
         while True:
-            #payload = self.fsock.receive(debug)
-            if debug:
-                print("rec'd: ", payload)
-            if not payload:
-                if debug: print(f"thread connected to {addr} done")
-                self.fsock.close()
-                return          # exit
-
             lock.acquire()
-
-##################################################
-
+            payload = self.fsock.receive(debug)
             payload = payload.decode()
 
             fileContents = payload.encode()
@@ -63,15 +60,9 @@ class Server(Thread):
             outputFile = open("fileTest.txt",'wb+')
             outputFile.write(fileContents)
             outputFile.close()
+            lock.release()
             print("fileTest outputted")
-
-
-
-
-
-
-################
-
+            sys.exit(0)
 
 
 
